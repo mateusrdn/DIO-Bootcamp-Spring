@@ -2,8 +2,13 @@ package com.springboot.cloudparking.model;
 
 import java.time.LocalDateTime;
 
+import javax.persistence.Entity;
+import javax.persistence.Id;
+
+@Entity(name = "parking")
 public class Parking {
 
+	@Id
 	private String id;
 	private String license;
 	private String state;

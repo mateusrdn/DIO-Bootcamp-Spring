@@ -9,41 +9,56 @@ import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.springboot.cloudparking.exception.ParkingNotFoundException;
 import com.springboot.cloudparking.model.Parking;
+import com.springboot.cloudparking.repository.ParkingRepository;
 
 @Service
 public class ParkingService {
 
-	private static Map<String, Parking> parkingMap = new HashMap<>();
-	
-	static {
-		
-		var id1 = getUUID();
-		var id2 = getUUID();
-		Parking parking1 = new Parking(id1, "DMS-1111", "SC", "CELTA", "PRETO");
-		Parking parking2 = new Parking(id2, "DMS-2222", "PE", "COROLA", "PRATA");
-		parkingMap.put(id1, parking1);
-		parkingMap.put(id2, parking2);
+	private final ParkingRepository parkingRepository;
+
+	public ParkingService(ParkingRepository parkingRepository) {
+		this.parkingRepository = parkingRepository;
 	}
-	
-	public List<Parking> findAll(){
-		return parkingMap.values().stream().collect(Collectors.toList());
+
+	public List<Parking> findAll() {
+		return parkingRepository.findAll();
 	}
 
 	private static String getUUID() {
 		return UUID.randomUUID().toString().replace("-", "");
 	}
-	
+
 	public Parking findById(String id) {
-		return parkingMap.get(id);
+		return parkingRepository.findById(id).orElseThrow(() -> new ParkingNotFoundException(id));
 	}
-	
+
 	public Parking create(Parking parkingCreate) {
-			String uuid = getUUID();
-			parkingCreate.setId(uuid);
-			parkingCreate.setEntryDate(LocalDateTime.now());
-			parkingMap.put(uuid, parkingCreate);
-			return parkingCreate;
+		String uuid = getUUID();
+		parkingCreate.setId(uuid);
+		parkingCreate.setEntryDate(LocalDateTime.now());
+		parkingRepository.save(parkingCreate);
+		return parkingCreate;
 	}
-	
+
+	public Parking update(String id, Parking parkingCreate) {
+		Parking parking = findById(id);
+		parking.setColor(parkingCreate.getColor());
+		parking.setState(parkingCreate.getState());
+		parking.setModel(parkingCreate.getModel());
+		parking.setLicense(parkingCreate.getLicense());
+		parkingRepository.save(parking);
+		return parking;
+	}
+
+	public void delete(String id) {
+		findById(id);
+		parkingRepository.deleteById(id);
+	}
+
+	public Parking exit(String id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }
