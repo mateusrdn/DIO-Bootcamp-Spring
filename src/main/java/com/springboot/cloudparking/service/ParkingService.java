@@ -1,13 +1,12 @@
 package com.springboot.cloudparking.service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.springboot.cloudparking.exception.ParkingNotFoundException;
 import com.springboot.cloudparking.model.Parking;
@@ -22,6 +21,7 @@ public class ParkingService {
 		this.parkingRepository = parkingRepository;
 	}
 
+	@Transactional(readOnly = true, propagation = Propagation.SUPPORTS)
 	public List<Parking> findAll() {
 		return parkingRepository.findAll();
 	}
@@ -30,10 +30,12 @@ public class ParkingService {
 		return UUID.randomUUID().toString().replace("-", "");
 	}
 
+	@Transactional(readOnly = true)
 	public Parking findById(String id) {
 		return parkingRepository.findById(id).orElseThrow(() -> new ParkingNotFoundException(id));
 	}
 
+	@Transactional
 	public Parking create(Parking parkingCreate) {
 		String uuid = getUUID();
 		parkingCreate.setId(uuid);
@@ -57,8 +59,11 @@ public class ParkingService {
 		parkingRepository.deleteById(id);
 	}
 
-	public Parking exit(String id) {
-		// TODO Auto-generated method stub
-		return null;
+	public Parking checkOut(String id) {
+		Parking parking = findById(id);
+		parking.setExitDate(LocalDateTime.now());
+		parking.setBill(ParkingCheckOut.getBill(parking));
+		parkingRepository.save(parking);
+		return parking;
 	}
 }
